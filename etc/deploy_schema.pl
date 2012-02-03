@@ -7,4 +7,6 @@ use lib 'lib';
 
 use SixteenColors;
 
-SixteenColors->model( 'DB' )->schema->deploy;
+my $schema = SixteenColors->model( 'DB' )->schema;
+$schema->deploy;
+$schema->journal_schema_deploy;
