@@ -3,7 +3,7 @@ package SixteenColors::Schema::Result::Pack;
 use strict;
 use warnings;
 
-use base qw( DBIx::Class );
+use parent 'DBIx::Class';
 
 use File::Basename ();
 use SixteenColors::Archive;
@@ -18,25 +18,6 @@ __PACKAGE__->add_columns(
         is_auto_increment => 1,
         is_nullable       => 0,
     },
-    approved => {
-        data_type     => 'boolean',
-        default_value => 0,
-        is_nullable   => 0,
-    },
-    canonical_name => {
-        data_type   => 'varchar',
-        size        => 128,
-        is_nullable => 0,
-    },
-    short_description => {
-        data_type   => 'varchar',
-        size        => 256,
-        is_nullable => 1,
-    },
-    description => {
-        data_type   => 'text',
-        is_nullable => 1,
-    },
     filename => {
         data_type   => 'varchar',
         size        => 128,
@@ -46,6 +27,15 @@ __PACKAGE__->add_columns(
         data_type   => 'varchar',
         size        => 512,
         is_nullable => 0,
+    },
+    approved => {
+        data_type     => 'boolean',
+        default_value => 0,
+        is_nullable   => 0,
+    },
+    annotation => {
+        data_type   => 'text',
+        is_nullable => 1,
     },
     year => {
         data_type   => 'integer',
@@ -73,9 +63,9 @@ __PACKAGE__->add_columns(
     },
 );
 __PACKAGE__->set_primary_key( qw( id ) );
-__PACKAGE__->add_unique_constraint( [ 'canonical_name' ] );
+__PACKAGE__->add_unique_constraint( [ 'filename' ] );
 __PACKAGE__->resultset_attributes( {
-    order_by => [ 'year, month, canonical_name' ],
+    order_by => [ 'year, month, filename' ],
     where    => { approved => 1 },
 } );
 
@@ -101,12 +91,7 @@ sub store_column {
     my ( $self, $name, $value ) = @_;
 
     if ( $name eq 'file_path' ) {
-        my $file      = File::Basename::basename( $value );
-        my $canonical = lc $file;
-        $canonical =~ s{\.[^.]+$}{};
-
-        $self->filename( $file );
-        $self->canonical_name( $canonical );
+        $self->filename( lc File::Basename::basename( $value ) );
     }
 
     $self->next::method( $name, $value );
@@ -167,8 +152,8 @@ sub group_name {
     return join ', ', @g;
 }
 
-sub description_as_html {
-    return Text::Markdown::markdown( shift->description || '' );
+sub annotation_as_html {
+    return Text::Markdown::markdown( shift->annotation || '' );
 }
 
 sub generate_preview {

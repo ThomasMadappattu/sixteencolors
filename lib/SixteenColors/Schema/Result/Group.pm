@@ -3,12 +3,12 @@ package SixteenColors::Schema::Result::Group;
 use strict;
 use warnings;
 
-use base qw( DBIx::Class );
+use parent qw( DBIx::Class );
 
 use Text::Markdown ();
 
 __PACKAGE__->load_components( qw( TimeStamp Core ) );
-__PACKAGE__->table( 'art_group' );    # can't just use "group" here.
+__PACKAGE__->table( 'group' );
 __PACKAGE__->add_columns(
     id => {
         data_type         => 'bigint',

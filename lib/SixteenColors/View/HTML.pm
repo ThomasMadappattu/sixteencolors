@@ -2,7 +2,7 @@ package SixteenColors::View::HTML;
 
 use strict;
 use warnings;
-use base 'Catalyst::View::TT';
+use parent 'Catalyst::View::TT';
 
 __PACKAGE__->config( TEMPLATE_EXTENSION => '.tt', WRAPPER => 'wrapper.tt' );
 

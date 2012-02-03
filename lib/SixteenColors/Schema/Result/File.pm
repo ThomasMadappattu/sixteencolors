@@ -3,9 +3,9 @@ package SixteenColors::Schema::Result::File;
 use strict;
 use warnings;
 
-use base qw( DBIx::Class );
+use parent 'DBIx::Class';
+
 use JSON::XS       ();
-use Data::Dump     ();
 use File::Basename ();
 use Encode         ();
 use GD             ();
@@ -15,7 +15,7 @@ use File::Copy        ();
 use Path::Class::File ();
 use File::Temp        ();
 
-__PACKAGE__->load_components( qw( InflateColumn TimeStamp Core ) );
+__PACKAGE__->load_components( qw( Tree::AdjacencyList::Ordered InflateColumn TimeStamp Core ) );
 __PACKAGE__->table( 'file' );
 __PACKAGE__->add_columns(
     id => {
@@ -38,6 +38,16 @@ __PACKAGE__->add_columns(
         size        => 512,
         is_nullable => 0,
     },
+    parent_id => {
+        data_type     => 'bigint',
+        default_value => 0,
+        is_nullable   => 0,
+    },
+    position => {
+        data_type     => 'bigint',
+        default_value => 0,
+        is_nullable   => 0,
+    },
     title => {
         data_type   => 'varchar',
         size        => 80,
@@ -48,9 +58,10 @@ __PACKAGE__->add_columns(
         size        => 80,
         is_nullable => 1,
     },
-    sauce => {
-        data_type   => 'text',
-        is_nullable => 1,
+    is_directory => {
+        data_type     => 'boolean',
+        default_value => 0,
+        is_nullable   => 1,
     },
 
     # JSON-encoded hashref of options for use when reading in files
@@ -94,9 +105,10 @@ __PACKAGE__->add_columns(
     },
 );
 __PACKAGE__->set_primary_key( qw( id ) );
-
-#__PACKAGE__->add_unique_constraint( [ 'pack_id', 'file_path' ] );
-__PACKAGE__->resultset_attributes( { order_by => [ 'file_path' ] } );
+__PACKAGE__->parent_column( 'parent_id' );
+__PACKAGE__->position_column( 'position' );
+__PACKAGE__->grouping_column( 'pack_id' );
+__PACKAGE__->add_unique_constraint( [ 'pack_id', 'parent_id', 'filename' ] );
 
 __PACKAGE__->belongs_to(
     pack => 'SixteenColors::Schema::Result::Pack',
@@ -112,9 +124,13 @@ __PACKAGE__->many_to_many(
 );
 
 __PACKAGE__->might_have(
-    file_fulltext => 'SixteenColors::Schema::Result::Fulltext',
+    file_fulltext => 'SixteenColors::Schema::Result::File::Fulltext',
     'file_id',
     { proxy => [ 'fulltext' ], }
+);
+__PACKAGE__->might_have(
+    sauce => 'SixteenColors::Schema::Result::File::SAUCE',
+    'file_id',
 );
 
 __PACKAGE__->inflate_column(
@@ -124,26 +140,28 @@ __PACKAGE__->inflate_column(
     }
 ) for qw( read render );
 
-__PACKAGE__->inflate_column(
-    'sauce',
-    {   inflate => sub { eval( shift ); },
-        deflate => sub { Data::Dump::dump shift },
-    }
-);
-
 sub store_column {
     my ( $self, $name, $value ) = @_;
 
     if ( $name eq 'file_path' ) {
         my $filename = $value;
-
-        # temporary measure for sub-dirs
-        $filename =~ s{/}{-}s;
         Encode::from_to( $filename, 'cp437', 'utf-8' );
+        $filename = lc File::Basename::basename( $value );
         $self->filename( $filename );
     }
 
     $self->next::method( $name, $value );
+}
+
+sub add_sauce_from_sauce_object {
+    my( $self, $sauce ) = @_;
+
+    return unless $sauce->has_sauce;
+
+    my %cols = %$sauce;
+    $cols{ comments } = join( "\n", @{ $cols{ comments } } );
+
+    return $self->create_related( 'sauce', \%cols );
 }
 
 sub artist_names {
@@ -328,22 +346,6 @@ sub generate_fullscale {
     $dir->cleanup;
 
     return $path;
-}
-
-sub previous {
-    my $self = shift;
-    return $self->pack->files(
-        { file_path => { '<' => $self->file_path } },
-        { order_by => 'file_path DESC', rows => 1 }
-    )->first;
-}
-
-sub next {
-    my $self = shift;
-    return $self->pack->files(
-        { file_path => { '>' => $self->file_path } },
-        { order_by => 'file_path ASC', rows => 1 }
-    )->first;
 }
 
 sub TO_JSON {

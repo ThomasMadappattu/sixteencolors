@@ -3,7 +3,7 @@ package SixteenColors::Schema::Result::Account;
 use strict;
 use warnings;
 
-use base 'DBIx::Class';
+use parent 'DBIx::Class';
 
 __PACKAGE__->load_components( qw( TimeStamp Core ) );
 __PACKAGE__->table( 'account' );

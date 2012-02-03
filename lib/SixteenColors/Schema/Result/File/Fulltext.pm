@@ -1,11 +1,11 @@
-package SixteenColors::Schema::Result::Fulltext;
+package SixteenColors::Schema::Result::File::Fulltext;
 
 use strict;
 use warnings;
 
-use base qw( DBIx::Class );
+use parent 'DBIx::Class';
 
-__PACKAGE__->load_components( qw( TimeStamp Core ) );
+__PACKAGE__->load_components( qw( Core ) );
 __PACKAGE__->table( 'file_fulltext' );
 __PACKAGE__->add_columns(
     file_id => {

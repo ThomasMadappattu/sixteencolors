@@ -31,6 +31,7 @@ requires 'DBIx::Class';
 requires 'DBIx::Class::ResultSet::Data::Pageset';
 requires 'DBIx::Class::Schema::Journal';
 requires 'DBIx::Class::TimeStamp';
+requires 'DBIx::Class::Tree::AdjacencyList::Ordered';
 requires 'Directory::Scratch';
 requires 'Encode';
 requires 'File::Basename';

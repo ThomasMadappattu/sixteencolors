@@ -3,7 +3,7 @@ package SixteenColors::Schema::ResultSet::File;
 use strict;
 use warnings;
 
-use base 'DBIx::Class::ResultSet::Data::Pageset';
+use parent 'DBIx::Class::ResultSet::Data::Pageset';
 
 sub random {
     my $self = shift;

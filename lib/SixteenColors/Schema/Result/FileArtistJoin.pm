@@ -3,7 +3,7 @@ package SixteenColors::Schema::Result::FileArtistJoin;
 use strict;
 use warnings;
 
-use base qw( DBIx::Class );
+use parent 'DBIx::Class';
 
 __PACKAGE__->load_components( qw( TimeStamp Core ) );
 __PACKAGE__->table( 'file_artist_join' );

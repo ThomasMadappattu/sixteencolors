@@ -3,7 +3,7 @@ package SixteenColors::Schema::Result::Artist;
 use strict;
 use warnings;
 
-use base qw( DBIx::Class );
+use parent qw( DBIx::Class );
 
 use Text::Markdown ();
 

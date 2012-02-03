@@ -1,6 +1,6 @@
 package SixteenColors::Schema::Result::Year;
 
-use base 'DBIx::Class::Core';
+use parent 'DBIx::Class::Core';
 
 __PACKAGE__->table_class( 'DBIx::Class::ResultSource::View' );
 

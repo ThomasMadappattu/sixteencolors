@@ -7,8 +7,9 @@ use SixteenColors::Archive;
 use Image::TextMode::SAUCE;
 use Try::Tiny;
 use XML::Atom::SimpleFeed;
+use Path::Class::File;
 
-use base 'DBIx::Class::ResultSet::Data::Pageset';
+use parent 'DBIx::Class::ResultSet::Data::Pageset';
 
 sub new_from_file {
     my ( $self, $file, $year, $c ) = @_;
@@ -42,7 +43,14 @@ sub new_from_file {
         my $dir = $pack->extract;
 
         for my $f ( @manifest ) {
-            next unless my $name = $dir->exists( $f );
+            my $name = $dir->exists( $f );
+            
+            unless( defined $name ) {
+                warn "File from pack not found: $f";
+                next;
+            }
+
+            # TODO: handle archives and directories
             next if -d $name;
 
             my $sauce = Image::TextMode::SAUCE->new;
@@ -51,12 +59,8 @@ sub new_from_file {
             $sauce->read( $fh );
             close( $fh );
 
-            my $newfile = $pack->add_to_files(
-                {   file_path => $f,
-                    ( $sauce->has_sauce ? ( sauce => $sauce ) : () )
-                }
-            );
-
+            my $newfile = $pack->add_to_files( { file_path => $f } );
+            $newfile->add_sauce_from_sauce_object( $sauce );
             next unless $newfile->is_textmode;
 
             $newfile->fulltext(
@@ -64,7 +68,7 @@ sub new_from_file {
         }
     }
     catch {
-        unlink $pack_file;
+        unlink $pack_file unless Path::Class::File->new( $file )->absolute eq $pack_file;
         $schema->txn_rollback;
         die $_;
     };

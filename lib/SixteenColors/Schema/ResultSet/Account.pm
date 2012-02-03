@@ -3,7 +3,7 @@ package SixteenColors::Schema::ResultSet::Account;
 use strict;
 use warnings;
 
-use base 'DBIx::Class::ResultSet';
+use parent 'DBIx::Class::ResultSet';
 
 sub auto_create {
     my ( $self, $authinfo ) = @_;
