@@ -159,6 +159,7 @@ sub add_sauce_from_sauce_object {
     return unless $sauce->has_sauce;
 
     my %cols = %$sauce;
+    delete $cols{ has_sauce };
     $cols{ comments } = join( "\n", @{ $cols{ comments } } );
 
     return $self->create_related( 'sauce', \%cols );

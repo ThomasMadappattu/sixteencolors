@@ -41,7 +41,7 @@ sub extract {
     my $warn = '';
     eval {
         local $SIG{ __WARN__ } = sub { $warn = shift };
-        $zip->extractTree( '', $dir );
+        $zip->extractTree( '', "${dir}/" );
     };
 
     return $dir unless $@ || $warn =~ m{Unsupported compression combination}i;
