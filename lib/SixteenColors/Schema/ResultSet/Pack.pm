@@ -42,6 +42,7 @@ sub new_from_file {
             = $self->create( { file_path => "${pack_file}", year => $year } );
         my $dir = $pack->extract;
 
+        my %seen_dirs;
         for my $f ( @manifest ) {
             my $name = $dir->exists( $f );
             
@@ -50,8 +51,30 @@ sub new_from_file {
                 next;
             }
 
-            # TODO: handle archives and directories
             next if -d $name;
+
+            # handle directories
+            my $parent = 0;
+            if( $f =~ m{/} ) {
+                my @path = split( m{/}, $f );
+                pop @path; # ignore file portion
+                my $full_path = '';
+                my $last = 0;
+                for ( @path ) {
+                    $full_path .= "/$_";
+                    $full_path =~ s{^/}{};
+
+                    unless( $seen_dirs{ $full_path } ) {
+                        my $return = $pack->add_to_files( { file_path => $full_path, is_directory => 1, parent_id => $parent } );
+                        $seen_dirs{ $full_path } = $return->id;
+                        $parent = $return->id;
+                    }
+
+                    $parent = $seen_dirs{ $full_path };
+                }
+            }
+
+            # TODO: handle archives
 
             my $sauce = Image::TextMode::SAUCE->new;
 
@@ -59,7 +82,7 @@ sub new_from_file {
             $sauce->read( $fh );
             close( $fh );
 
-            my $newfile = $pack->add_to_files( { file_path => $f } );
+            my $newfile = $pack->add_to_files( { file_path => $f, parent_id => $parent } );
             $newfile->add_sauce_from_sauce_object( $sauce );
             next unless $newfile->is_textmode;
 
