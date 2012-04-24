@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use parent 'Catalyst::Model::DBIC::Schema';
 
+__PACKAGE__->config( schema_class => 'SixteenColors::Schema' );
+
 =head1 NAME
 
 SixteenColors::Model::DB - Catalyst Model
