@@ -8,6 +8,7 @@ use lib 'lib';
 use File::Basename ();
 use Path::Class::Dir ();
 use SixteenColors;
+use Try::Tiny;
 
 my $c      = 'SixteenColors';
 my $schema = $c->model( 'DB' )->schema;
@@ -73,9 +74,12 @@ sub _index {
             next;
         }
 
-        $schema->txn_do( sub {
+        try {
             my $pack = $rs->new_from_file( $file, $year, $c );
-            $pack->update( { approved => 1 } );
-        } );
+            $schema->txn_do( sub { $pack->update( { approved => 1 } ) } );
+        }
+        catch {
+            printf "[ERROR] Problem indexing pack: %s\n", $_;
+        };
     }
 }
